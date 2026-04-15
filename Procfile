@@ -1,1 +1,1 @@
-worker: pip install python-telegram-bot==20.7 gspread oauth2client && python bot.py
+worker: python -m pip install --upgrade pip && python -m pip install python-telegram-bot==20.7 gspread oauth2client && python bot.py
