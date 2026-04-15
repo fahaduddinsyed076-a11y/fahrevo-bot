@@ -1,1 +1,1 @@
-worker: python3 -m pip install -r requirements.txt && python3 bot.py
+worker: pip install python-telegram-bot==20.7 gspread oauth2client && python bot.py
