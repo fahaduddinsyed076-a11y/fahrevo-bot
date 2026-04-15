@@ -4,4 +4,4 @@ oauth2client
 
 # force rebuild
 
-# rebuild v2
+# rebuild v2R
