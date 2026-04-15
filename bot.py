@@ -126,15 +126,15 @@ def parse_message(text: str):
     }
 
 
-async def cmd_start(update: Update, context: ContextTypes.DEFAULT):
+async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(HELP_MSG, parse_mode="Markdown")
 
 
-async def cmd_help(update: Update, context: ContextTypes.DEFAULT):
+async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(HELP_MSG, parse_mode="Markdown")
 
 
-async def cmd_summary(update: Update, context: ContextTypes.DEFAULT):
+async def cmd_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.username != ALLOWED_USER:
         return
     try:
@@ -168,7 +168,7 @@ async def cmd_summary(update: Update, context: ContextTypes.DEFAULT):
         await update.message.reply_text(f"❌ Error: {e}")
 
 
-async def handle_expense(update: Update, context: ContextTypes.DEFAULT):
+async def handle_expense(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.username != ALLOWED_USER:
         await update.message.reply_text("⛔ Access denied.")
         return
