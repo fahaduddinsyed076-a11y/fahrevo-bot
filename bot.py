@@ -1,7 +1,8 @@
 import logging
+import asyncio
 from datetime import datetime
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -126,15 +127,15 @@ def parse_message(text: str):
     }
 
 
-def cmd_start(update, context):
-    update.message.reply_text(HELP_MSG, parse_mode="Markdown")
+async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(HELP_MSG, parse_mode="Markdown")
 
 
-def cmd_help(update, context):
-    update.message.reply_text(HELP_MSG, parse_mode="Markdown")
+async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(HELP_MSG, parse_mode="Markdown")
 
 
-def cmd_summary(update, context):
+async def cmd_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.username != ALLOWED_USER:
         return
     try:
@@ -155,7 +156,7 @@ def cmd_summary(update, context):
         p = sum_today(sheet.worksheet("Personal Expenses"))
         b = sum_today(sheet.worksheet("Fahrevo Cafe Expenses"))
 
-        update.message.reply_text(
+        await update.message.reply_text(
             f"📊 *Today ({today})*\n\n"
             f"👤 Personal: *₹{p:.0f}*\n"
             f"☕ Cafe: *₹{b:.0f}*\n"
@@ -165,17 +166,17 @@ def cmd_summary(update, context):
         )
     except Exception as e:
         logger.error(f"Summary error: {e}")
-        update.message.reply_text(f"❌ Error: {e}")
+        await update.message.reply_text(f"❌ Error: {e}")
 
 
-def handle_expense(update, context):
+async def handle_expense(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.username != ALLOWED_USER:
-        update.message.reply_text("⛔ Access denied.")
+        await update.message.reply_text("⛔ Access denied.")
         return
 
     data = parse_message(update.message.text)
     if not data:
-        update.message.reply_text(
+        await update.message.reply_text(
             "❌ Format not recognised.\n\nTry: `chai 40 cash` or `chicken 280 upi biz`\n\n/help for guide.",
             parse_mode="Markdown"
         )
@@ -197,7 +198,7 @@ def handle_expense(update, context):
         emoji = "☕" if data["is_business"] else "👤"
         sheet_name = "Cafe Sheet" if data["is_business"] else "Personal Sheet"
 
-        update.message.reply_text(
+        await update.message.reply_text(
             f"✅ *Added!*\n\n"
             f"{emoji} {sheet_name}\n"
             f"📝 {data['description']}\n"
@@ -209,20 +210,19 @@ def handle_expense(update, context):
 
     except Exception as e:
         logger.error(f"Sheet error: {e}")
-        update.message.reply_text(f"❌ Error: {e}")
+        await update.message.reply_text(f"❌ Error: {e}")
 
 
 def main():
-    updater = Updater(BOT_TOKEN, use_context=True)
-    dp = updater.dispatcher
+    app = Application.builder().token(BOT_TOKEN).build()
 
-    dp.add_handler(CommandHandler("start", cmd_start))
-    dp.add_handler(CommandHandler("help", cmd_help))
-    dp.add_handler(CommandHandler("summary", cmd_summary))
-    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_expense))
+    app.add_handler(CommandHandler("start", cmd_start))
+    app.add_handler(CommandHandler("help", cmd_help))
+    app.add_handler(CommandHandler("summary", cmd_summary))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_expense))
+    
     logger.info("✅ Fahrevo Bot running...")
-    updater.start_polling()
-    updater.idle()
+    app.run_polling()
 
 
 if __name__ == "__main__":
