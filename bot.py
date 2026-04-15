@@ -1,8 +1,8 @@
+import os
 import logging
-import asyncio
 from datetime import datetime
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -61,11 +61,20 @@ HELP_MSG = """*Fahrevo Budget Bot* 🤖
 
 
 def connect_sheets():
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    creds = ServiceAccountCredentials.from_json_keyfile_name(CREDS_FILE, scope)
+    import os
+    import json
+    from oauth2client.service_account import ServiceAccountCredentials
+
+    scope = [
+        "https://spreadsheets.google.com/feeds",
+        "https://www.googleapis.com/auth/drive"
+    ]
+
+    creds_dict = json.loads(os.environ["GOOGLE_CREDENTIALS"])
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
+
     client = gspread.authorize(creds)
     return client.open_by_key(SHEET_ID)
-
 
 def find_next_empty_row(ws):
     """Find first empty row starting from row 3."""
@@ -214,13 +223,11 @@ async def handle_expense(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def main():
-    app = Application.builder().token(BOT_TOKEN).build()
-
+    app = ApplicationBuilder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("summary", cmd_summary))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_expense))
-    
     logger.info("✅ Fahrevo Bot running...")
     app.run_polling()
 
