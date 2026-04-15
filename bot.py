@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 
@@ -126,15 +126,15 @@ def parse_message(text: str):
     }
 
 
-async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def cmd_start(update: Update, context: ContextTypes.DEFAULT):
     await update.message.reply_text(HELP_MSG, parse_mode="Markdown")
 
 
-async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def cmd_help(update: Update, context: ContextTypes.DEFAULT):
     await update.message.reply_text(HELP_MSG, parse_mode="Markdown")
 
 
-async def cmd_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def cmd_summary(update: Update, context: ContextTypes.DEFAULT):
     if update.effective_user.username != ALLOWED_USER:
         return
     try:
@@ -168,7 +168,7 @@ async def cmd_summary(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ Error: {e}")
 
 
-async def handle_expense(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def handle_expense(update: Update, context: ContextTypes.DEFAULT):
     if update.effective_user.username != ALLOWED_USER:
         await update.message.reply_text("⛔ Access denied.")
         return
@@ -212,15 +212,16 @@ async def handle_expense(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"❌ Error: {e}")
 
 
-def main():
-    app = ApplicationBuilder().token(BOT_TOKEN).build()
+async def main():
+    app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("help", cmd_help))
     app.add_handler(CommandHandler("summary", cmd_summary))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_expense))
     logger.info("✅ Fahrevo Bot running...")
-    app.run_polling()
+    await app.run_polling()
 
 
 if __name__ == "__main__":
-    main()
+    import asyncio
+    asyncio.run(main())
